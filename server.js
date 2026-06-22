@@ -29,6 +29,18 @@ function saveAll() {
     fs.writeFileSync(SETTINGS_FILE, JSON.stringify(settings, null, 2));
 }
 
+// --- 추가된 경로 설정 ---
+// 메인 페이지 접속 시 index.html 표시
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+// 관리자 페이지 접속 시 admin.html 표시
+app.get('/admin', (req, res) => {
+    res.sendFile(path.join(__dirname, 'admin.html'));
+});
+// -----------------------
+
 // API
 app.get('/api/settings', (req, res) => res.json(settings));
 app.post('/api/settings', (req, res) => {
@@ -70,7 +82,6 @@ app.post('/api/reset', (req, res) => {
     res.json({ success: true });
 });
 
-// 기존 코드 맨 아래를 이렇게 변경하세요
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`서버가 ${PORT}번 포트에서 실행 중입니다.`);
