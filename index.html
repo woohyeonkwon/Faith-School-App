@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>신앙학교 신청 대기실</title>
+    <style>
+        body { font-family: 'Malgun Gothic', sans-serif; background-color: #1a2a3a; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; color: white; }
+        .container { background: rgba(255, 255, 255, 0.1); padding: 40px; border-radius: 16px; box-shadow: 0 8px 32px rgba(0,0,0,0.3); width: 100%; max-width: 400px; text-align: center; border: 1px solid rgba(255,255,255,0.1); }
+        #logoImg { max-width: 150px; display: none; margin: 0 auto 20px; }
+        input { width: 100%; padding: 12px; margin: 8px 0; border-radius: 6px; border: none; font-size: 16px; box-sizing: border-box; }
+        button { width: 100%; padding: 14px; background-color: #e67e22; border: none; border-radius: 6px; color: white; font-weight: bold; cursor: pointer; }
+        #timerBox { display: none; background: #e74c3c; padding: 20px; border-radius: 12px; font-size: 32px; font-weight: bold; margin-top: 20px; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <img id="logoImg" src="" alt="로고">
+    <h1 id="pageTitle">신앙학교 신청 대기실</h1>
+    <div id="inputBox">
+        <input type="text" id="preName" placeholder="학생 이름">
+        <input type="text" id="prePhone" placeholder="전화번호 (010-XXXX-XXXX)">
+        <button onclick="registerWaiting()">대기열 등록하기</button>
+    </div>
+    <div id="timerBox"><div id="countdown">00:00:00</div></div>
+    <p id="statusMsg" style="margin-top:20px; font-weight: bold;"></p>
+</div>
+
+<script>
+    let openTime = null;
+    fetch('/api/settings').then(res => res.json()).then(data => {
+        document.getElementById('pageTitle').innerText = data.title;
+        if(data.logoUrl) { document.getElementById('logoImg').src = data.logoUrl; document.getElementById('logoImg').style.display = 'block'; }
+        if(data.startTime) openTime = new Date(data.startTime).getTime();
+    });
+
+    function registerWaiting() {
+        const name = document.getElementById('preName').value.trim();
+        const phone = document.getElementById('prePhone').value.trim();
+        if(!name || !phone) return alert('정보를 모두 입력하세요.');
+        
+        fetch('/api/waiting', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, phone, isPreRegistered: true })
+        }).then(() => {
+            localStorage.setItem('tempName', name);
+            localStorage.setItem('tempPhone', phone);
+            document.getElementById('inputBox').style.display = 'none';
+            document.getElementById('timerBox').style.display = 'block';
+            document.getElementById('statusMsg').innerText = `${name}님 대기 중...`;
+            startTimer();
+        });
+    }
+
+    function startTimer() {
+        setInterval(() => {
+            const dist = openTime - new Date().getTime();
+            if (dist <= 0) window.location.href = 'form.html';
+            const h = Math.floor((dist % 86400000) / 3600000);
+            const m = Math.floor((dist % 3600000) / 60000);
+            const s = Math.floor((dist % 60000) / 1000);
+            document.getElementById('countdown').innerText = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+        }, 1000);
+    }
+</script>
+</body>
+</html>
